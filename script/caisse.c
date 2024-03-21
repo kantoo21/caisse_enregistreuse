@@ -2,66 +2,125 @@
 #include <stdlib.h>
 #include <time.h>
 
-double calcule_monnaie(double montant_paye, double valeur_a_payer) {
-    return montant_paye - valeur_a_payer;
+#define NB_BILLETS 7
+#define NB_PIECES 7
+
+typedef struct {
+    int billets[NB_BILLETS];
+    int pieces[NB_PIECES];
+} Stock;
+
+double genererValeurAPayer() {
+    return ((double)rand() / RAND_MAX) * 1000.0;
+}
+
+double demanderPaiement() {
+    double paiement;
+    printf("Entrez la somme que vous souhaitez payer : ");
+    scanf("%lf", &paiement);
+    return paiement;
+}
+
+double calculerMonnaie(double montantAPayer, double paiement) {
+    return paiement - montantAPayer;
+}
+
+void rendreMonnaie(double monnaie, Stock *stock) {
+    int billets[] = {2000, 1000, 500, 200, 100, 50, 25};
+    int pieces[] = {20, 10, 5, 1, 50, 20, 5};
+
+    printf("Monnaie rendue :\n");
+
+    for (int i = 0; i < NB_BILLETS; i++) {
+        while (monnaie >= billets[i] && stock->billets[i] > 0) {
+            printf("Billet de Rs%d\n", billets[i]);
+            monnaie -= billets[i];
+            stock->billets[i]--;
+        }
+    }
+
+    for (int i = 0; i < NB_PIECES; i++) {
+        while (monnaie >= pieces[i] && stock->pieces[i] > 0) {
+            printf("Pièce de Rs%d\n", pieces[i]);
+            monnaie -= pieces[i];
+            stock->pieces[i]--;
+        }
+    }
+}
+
+int verifierStocks(Stock stock) {
+    for (int i = 0; i < NB_BILLETS; i++) {
+        if (stock.billets[i] > 0) {
+            return 1;
+        }
+    }
+    for (int i = 0; i < NB_PIECES; i++) {
+        if (stock.pieces[i] > 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void afficherStocks(Stock stock) {
+    printf("Stock de billets :\n");
+    for (int i = 0; i < NB_BILLETS; i++) {
+        printf("Billet de Rs%d : %d\n", (i == NB_BILLETS - 1) ? 1 : (i + 1) * 50, stock.billets[i]);
+    }
+    printf("Stock de pièces :\n");
+    for (int i = 0; i < NB_PIECES; i++) {
+        printf("Pièce de Rs%d : %d\n", (i == NB_PIECES - 1) ? 5 : (i + 1) * 5, stock.pieces[i]);
+    }
+}
+
+void remplirCaisse(Stock *stock) {
+    for (int i = 0; i < NB_BILLETS; i++) {
+        stock->billets[i] = 50;
+    }
+    for (int i = 0; i < NB_PIECES; i++) {
+        stock->pieces[i] = 50;
+    }
+    printf("La caisse a été remplie.\n");
 }
 
 int main() {
-    // Initialisation de la graine pour la génération aléatoire
     srand(time(NULL));
-    
-    // Génération d'un double aléatoire pour représenter la valeur à payer
-    double valeur_a_payer = (double)rand() / RAND_MAX * 1000; // Vous pouvez ajuster la plage de valeurs si nécessaire
-    
-    printf("Valeur à payer : Rs%.2f\n", valeur_a_payer);
-    
-    double montant_paye;
-    
-    do {
-        // Demander à l'utilisateur de saisir le montant payé
-        printf("Entrez le montant que vous souhaitez payer : Rs");
-        scanf("%lf", &montant_paye);
-        
-        // Vérifier si le montant payé est suffisant
-        if (montant_paye < valeur_a_payer) {
-            printf("Le montant payé est insuffisant. Veuillez saisir une valeur égale ou supérieure à Rs%.2f\n", valeur_a_payer);
+
+    Stock stock;
+    remplirCaisse(&stock);
+
+    while (1) {
+        double valeurAPayer = genererValeurAPayer();
+        printf("La valeur à payer est : %.2f\n", valeurAPayer);
+
+        double paiement;
+        do {
+            paiement = demanderPaiement();
+            if (paiement < valeurAPayer) {
+                printf("Le paiement est insuffisant. Veuillez saisir une somme égale ou supérieure à %.2f\n", valeurAPayer);
+            }
+        } while (paiement < valeurAPayer);
+
+        double monnaie = calculerMonnaie(valeurAPayer, paiement);
+        printf("Monnaie à rendre : %.2f\n", monnaie);
+
+        if (monnaie > 0 && verifierStocks(stock)) {
+            rendreMonnaie(monnaie, &stock);
+            afficherStocks(stock);
+        } else {
+            printf("Le stock de billets et de pièces est épuisé.\n");
+            char choix;
+            printf("Que souhaitez-vous faire ? (C: fermer la caisse / R: remplir la caisse) : ");
+            scanf(" %c", &choix);
+            if (choix == 'C' || choix == 'c') {
+                break;
+            } else if (choix == 'R' || choix == 'r') {
+                remplirCaisse(&stock);
+            } else {
+                printf("Choix invalide.\n");
+            }
         }
-    } while (montant_paye < valeur_a_payer);
-    
-    // Calculer la monnaie à rendre en utilisant la fonction calcule_monnaie()
-    double monnaie = calcule_monnaie(montant_paye, valeur_a_payer);
-    printf("Merci pour votre paiement. Votre monnaie à rendre est Rs%.2f\n", monnaie);
-    
-    // Déterminer les billets et les pièces à rendre
-    int billets_5000 = monnaie / 5000;
-    monnaie -= billets_5000 * 5000;
-    int billets_2000 = monnaie / 2000;
-    monnaie -= billets_2000 * 2000;
-    int billets_1000 = monnaie / 1000;
-    monnaie -= billets_1000 * 1000;
-    int billets_500 = monnaie / 500;
-    monnaie -= billets_500 * 500;
-    int billets_200 = monnaie / 200;
-    monnaie -= billets_200 * 200;
-    int billets_100 = monnaie / 100;
-    monnaie -= billets_100 * 100;
-    int billets_50 = monnaie / 50;
-    monnaie -= billets_50 * 50;
-    int billets_20 = monnaie / 20;
-    monnaie -= billets_20 * 20;
-    
-    // Affichage des billets et pièces à rendre
-    printf("Billets à rendre:\n");
-    printf("Rs5000: %d\n", billets_5000);
-    printf("Rs2000: %d\n", billets_2000);
-    printf("Rs1000: %d\n", billets_1000);
-    printf("Rs500: %d\n", billets_500);
-    printf("Rs200: %d\n", billets_200);
-    printf("Rs100: %d\n", billets_100);
-    printf("Rs50: %d\n", billets_50);
-    printf("Rs20: %d\n", billets_20);
-    printf("Pièces à rendre:\n");
-    printf("Rs%.2f\n", monnaie);
+    }
     
     return 0;
 }

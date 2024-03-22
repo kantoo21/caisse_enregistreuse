@@ -89,7 +89,7 @@ int main() {
     Stock stock;
     remplirCaisse(&stock);
 
-    while (1) {
+    while (verifierStocks(stock)) {
         double valeurAPayer = genererValeurAPayer();
         printf("La valeur à payer est : %.2f\n", valeurAPayer);
 
@@ -104,7 +104,7 @@ int main() {
         double monnaie = calculerMonnaie(valeurAPayer, paiement);
         printf("Monnaie à rendre : %.2f\n", monnaie);
 
-        if (monnaie > 0 && verifierStocks(stock)) {
+        if (monnaie > 0) {
             rendreMonnaie(monnaie, &stock);
             afficherStocks(stock);
         } else {
@@ -121,6 +121,8 @@ int main() {
             }
         }
     }
+    
+    printf("Programme terminé.\n");
     
     return 0;
 }
